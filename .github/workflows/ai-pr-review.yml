@@ -29,7 +29,7 @@ jobs:
           OPENAI.API_BASE: "https://api.you.com/v1"
           CONFIG.MODEL: "openai/deepseek-v4-flash"
           CONFIG.CUSTOM_MODEL_MAX_TOKENS: "32000"
-          CONFIG.FALLBACK_MODELS: "[]"
+          CONFIG.FALLBACK_MODELS: '["openai/qwen3.8-flash"]'
           GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
           GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "false"
