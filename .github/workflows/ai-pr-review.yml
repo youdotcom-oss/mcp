@@ -1,0 +1,36 @@
+name: AI PR Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-pr-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Run PR-Agent review via You.com Inference Router
+        uses: qodo-ai/pr-agent@v0.46.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_KEY: ${{ secrets.YDC_API_KEY }}
+          OPENAI.API_BASE: "https://api.you.com/v1"
+          CONFIG.MODEL: "openai/deepseek-v4-flash"
+          GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
+          GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
+          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "false"
+          GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review", "synchronize"]'
+          SKILLS.ENABLED: "true"
+          SKILLS.PATHS: "['.agents/skills/review-guidelines/SKILL.md']"
