@@ -28,7 +28,7 @@ jobs:
           OPENAI_KEY: ${{ secrets.YDC_API_KEY }}
           OPENAI.API_BASE: "https://api.you.com/v1"
           CONFIG.MODEL: "openai/deepseek-v4-flash"
-          CONFIG.CUSTOM_MODEL_MAX_TOKENS: "32000"
+          CONFIG.CUSTOM_MODEL_MAX_TOKENS: "128000"
           CONFIG.FALLBACK_MODELS: '["openai/qwen3.8-flash"]'
           CONFIG.OUTPUT_RUN_DETAILS: "true"
           CONFIG.OUTPUT_RUN_COST: "true"
