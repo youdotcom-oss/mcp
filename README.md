@@ -164,7 +164,7 @@ Two additional tools are available on request:
 
 Request additional tools explicitly with `tools`. `tools` scopes the visible tool set.
 
-Today, `profile=free` is a search-only mode. It overrides `tools` and exposes only `you-search`.
+Today, `profile=free` is a keyless mode. It overrides `tools` and exposes `you-search` and `you-discover`.
 
 Examples:
 
@@ -172,7 +172,7 @@ Examples:
 - Finance only: `https://api.you.com/mcp?tools=you-finance`
 - Search plus finance: `https://api.you.com/mcp?tools=you-search,you-finance`
 - Research only: `https://api.you.com/mcp?tools=you-research`
-- Free search profile: `https://api.you.com/mcp?profile=free`
+- Free profile (keyless): `https://api.you.com/mcp?profile=free`
 
 ## Links
 
