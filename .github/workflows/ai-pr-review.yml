@@ -34,7 +34,9 @@ jobs:
           CONFIG.OUTPUT_RUN_COST: "true"
           GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
-          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "false"
+          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "true"
+          CONFIG.REASONING_EFFORT: "high"
+          PR_REVIEWER.NUM_MAX_FINDINGS: "5"
           GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review", "synchronize"]'
           SKILLS.ENABLED: "true"
           SKILLS.PATHS: "['.agents/skills/review-guidelines/SKILL.md']"
