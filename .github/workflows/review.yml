@@ -52,7 +52,7 @@ jobs:
 
       - name: Auto Review (internal)
         if: github.event_name == 'pull_request' && steps.check_internal.outputs.is_internal == 'true'
-        uses: qodo-ai/pr-agent@v0.46.0
+        uses: qodo-ai/pr-agent@1d01f24f455bb879c1d9c557ad7de3d72dcc7975 # v0.46.0 (immutable SHA pin)
         env:
           GITHUB_TOKEN: ${{ github.token }}
           OPENAI_KEY: ${{ secrets.YDC_API_KEY }}
