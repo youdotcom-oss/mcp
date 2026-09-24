@@ -1,0 +1,109 @@
+name: Auto Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Pull request number to review (for external contributors)"
+        required: true
+        type: number
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check if internal contributor
+        id: check_internal
+        if: github.event_name == 'pull_request'
+        run: |
+          RESPONSE=$(gh api "repos/$REPOSITORY/collaborators/$PR_AUTHOR/permission" 2>/dev/null || echo '{"permission":"none"}')
+          PERMISSION=$(echo "$RESPONSE" | jq -r '.permission')
+          echo "Author permission: $PERMISSION"
+
+          if [[ "$PERMISSION" != "admin" && "$PERMISSION" != "maintain" && "$PERMISSION" != "write" ]]; then
+            echo "Skipping auto-review for external contributor (permission: $PERMISSION)"
+            echo "Use 'Actions > Auto Review > Run workflow' to manually trigger review"
+            echo "is_internal=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Author is internal contributor, proceeding with review"
+          echo "is_internal=true" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPOSITORY: ${{ github.repository }}
+
+      - name: Checkout repository
+        if: github.event_name == 'pull_request' && steps.check_internal.outputs.is_internal == 'true' || github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Auto Review (internal)
+        if: github.event_name == 'pull_request' && steps.check_internal.outputs.is_internal == 'true'
+        uses: qodo-ai/pr-agent@1d01f24f455bb879c1d9c557ad7de3d72dcc7975 # v0.46.0 (immutable SHA pin)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          OPENAI_KEY: ${{ secrets.YDC_API_KEY }}
+          OPENAI.API_BASE: "https://api.you.com/v1"
+          CONFIG.MODEL: "openai/deepseek-v4-flash"
+          CONFIG.CUSTOM_MODEL_MAX_TOKENS: "128000"
+          CONFIG.FALLBACK_MODELS: '["openai/qwen3.8-flash"]'
+          CONFIG.OUTPUT_RUN_DETAILS: "true"
+          CONFIG.OUTPUT_RUN_COST: "true"
+          GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
+          GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
+          GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "true"
+          GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review", "synchronize"]'
+          CONFIG.REASONING_EFFORT: "high"
+          PR_REVIEWER.NUM_MAX_FINDINGS: "5"
+          SKILLS.ENABLED: "true"
+          SKILLS.PATHS: "['.agents/skills/review-guidelines/SKILL.md']"
+
+      - name: Checkout PR branch (external)
+        if: github.event_name == 'workflow_dispatch'
+        run: gh pr checkout "$PR_NUMBER"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+
+      - name: Install PR-Agent CLI
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pragent-venv"
+          "$RUNNER_TEMP/pragent-venv/bin/pip" install "pr-agent==0.46.0"
+          echo "$RUNNER_TEMP/pragent-venv/bin" >> "$GITHUB_PATH"
+
+      - name: Auto Review (external)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          PR_URL="https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
+          pr-agent --pr_url="$PR_URL" describe
+          pr-agent --pr_url="$PR_URL" review
+          pr-agent --pr_url="$PR_URL" improve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          GITHUB__USER_TOKEN: ${{ github.token }}
+          OPENAI_KEY: ${{ secrets.YDC_API_KEY }}
+          OPENAI__API_BASE: "https://api.you.com/v1"
+          CONFIG__MODEL: "openai/deepseek-v4-flash"
+          CONFIG__CUSTOM_MODEL_MAX_TOKENS: "128000"
+          CONFIG__FALLBACK_MODELS: '["openai/qwen3.8-flash"]'
+          CONFIG__OUTPUT_RUN_DETAILS: "true"
+          CONFIG__OUTPUT_RUN_COST: "true"
+          CONFIG__REASONING_EFFORT: "high"
+          PR_REVIEWER__NUM_MAX_FINDINGS: "5"
+          SKILLS__ENABLED: "true"
+          SKILLS__PATHS: "['.agents/skills/review-guidelines/SKILL.md']"
