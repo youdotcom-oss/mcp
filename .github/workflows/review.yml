@@ -20,7 +20,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      issues: write
     steps:
       - name: Check if internal contributor
         id: check_internal
@@ -65,8 +64,15 @@ jobs:
           GITHUB_ACTION_CONFIG.AUTO_REVIEW: "true"
           GITHUB_ACTION_CONFIG.AUTO_DESCRIBE: "true"
           GITHUB_ACTION_CONFIG.AUTO_IMPROVE: "true"
-          GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review", "synchronize"]'
+          GITHUB_ACTION_CONFIG.PR_ACTIONS: '["opened", "reopened", "ready_for_review"]'
+          # synchronize events are handled before pr_actions; without push trigger
+          # config the runner skips them, so new pushes would never be re-reviewed
+          GITHUB_ACTION_CONFIG.HANDLE_PUSH_TRIGGER: "true"
+          GITHUB_ACTION_CONFIG.PUSH_COMMANDS: '["/describe", "/review"]'
           CONFIG.REASONING_EFFORT: "high"
+          # reasoning_effort is only sent for models LiteLLM marks reasoning-capable
+          # or models listed here; router model IDs are unknown to LiteLLM metadata
+          CONFIG.ADDITIONAL_REASONING_EFFORT_MODELS: '["openai/deepseek-v4-flash", "openai/qwen3.8-flash"]'
           PR_REVIEWER.NUM_MAX_FINDINGS: "5"
           SKILLS.ENABLED: "true"
           SKILLS.PATHS: "['.agents/skills/review-guidelines/SKILL.md']"
@@ -104,6 +110,7 @@ jobs:
           CONFIG__OUTPUT_RUN_DETAILS: "true"
           CONFIG__OUTPUT_RUN_COST: "true"
           CONFIG__REASONING_EFFORT: "high"
+          CONFIG__ADDITIONAL_REASONING_EFFORT_MODELS: '["openai/deepseek-v4-flash", "openai/qwen3.8-flash"]'
           PR_REVIEWER__NUM_MAX_FINDINGS: "5"
           SKILLS__ENABLED: "true"
           SKILLS__PATHS: "['.agents/skills/review-guidelines/SKILL.md']"
